@@ -91,40 +91,43 @@ class Household:
         BeginDemand = Demand / NumPers 
                                 
         self.actualdemand = demand - BeginDemand
-            if actualdemand < 0:
-                print "I gotta work on my carbon footprint!"
-            elif actualdemand > 0:
-                print "I am already soooo ecofriendly!"
-            elif actualdemand = 0:
-                print "Just about right!"
-            else:
-                print "Something had gone wrong!"
-            #TODO overwrite demand von oben, damit der neue Demand eine eigenchaft  
+        # TODO C: Hier wurde ohne Grund eingerueckt und damit ein Fehler verursacht; zudem muss print mit Klammern als Funktion verwendet werden (wir sind ja Python 3)
+        if actualdemand < 0:
+            print("I gotta work on my carbon footprint!")
+        elif actualdemand > 0:
+            print("I am already soooo ecofriendly!")
+        elif actualdemand == 0: # TODO C: Tests auf Gleichheit mit '==' nicht '='
+            print("Just about right!")
+        else:
+            print("Something had gone wrong!")
+        #TODO overwrite demand von oben, damit der neue Demand eine eigenchaft  
         
         """
         Implicit assumption here: Households FIRST decide whether they sell or buy allowances and only then think about investement.
         This is important because the sell/buy decision has an impact on the investment decision. 
         """
-        def decide_sellbuy():
+        # TODO Bei den Funktion im Folgenden hast du bei der Definition immer 'self' als erstes Argument vergessen
+        def decide_sellbuy(self):
             """
             Households decide whether they sell or buy allowances.
             Factors are: actualdemand, socioecol, econ
             """
-            if actualdemand > 0:
+            if actualdemand > 0: # TODO C Wenn hier das oben in Zeile 95 gemeinte actualdemand gemeint ist musst du schreiben: self.actualdemand
                 sell 
             if actualdemand <0:
                 buy
             else:
                 print("I did nothing")
-        
-        def sell():
+        # TODO C Bei den nächsten beiden Funktionen ist sold und bought nicht definiert
+        def sell(self):
             """
             This is a function that makes households sell all their affluent carbon allowances.
             """
             #TODO this will have to do with the market! 
             #TODO der Haushalt muss sich das merken und dann eine Eigenschanft haben, der beschreibt dass diese Aktion gemacht wurde:
             sold
-        def buy():
+            
+        def buy(self):
             """
             This is a function that makes households buy exactly as many carbon allowances as they need to cover their demand.
             """
@@ -140,27 +143,29 @@ class Household:
             """
             Households decide whether they invest money in carbon abatement technologies or save money.
             """
+            # TODO C: die Variablen sold and bought, econ und socioecol sind hier nicht definiert; wahrscheinlich willst du self.econ, self.socioecol etc. verwenden, weil es ja in init definiert Klassenattribute sind?
             #TODO klären ob ich die econ und socioecol so in ein IfStatement packen kann
+            # TODO C: Es sollten ja "und" Tests sein, also ob econ > 0.6 UND socioecol >0.6 oder? Dann muss man das so machen:
             if sold:
-                if econ > 0.6 socioecol > 0.6:
+                if (econ > 0.6) and (socioecol > 0.6):
                     invest
-                elif econ > 0.6 socioecol < 0.6:
+                elif (econ > 0.6) and (socioecol < 0.6):
                     save
-                elif econ < 0.6 socioecol > 0.6:
+                elif (econ < 0.6) and (socioecol > 0.6):
                     invest
-                elif econ < 0.6 socioecol < 0.6:
+                elif (econ < 0.6) and (socioecol < 0.6):
                     save
                 else:
                     print("Do you know what my motivation is?!")
-                    
-            if bought:
-                if econ > 0.6 socioecol > 0.6:
+            # TODO C: Hier auch wie oben anpassen
+            if bought: 
+                if (econ > 0.6) and (socioecol > 0.6):
                     invest
-                elif econ > 0.6 socioecol < 0.6:
+                elif (econ > 0.6) and (socioecol < 0.6):
                     invest
-                elif econ < 0.6 socioecol > 0.6:
+                elif (econ < 0.6) and (socioecol > 0.6):
                     invest
-                elif econ < 0.6 socioecol < 0.6:
+                elif (econ < 0.6) and (socioecol < 0.6):
                     save
                 else:
                     print("Do you know what my motivation is?!")
@@ -183,7 +188,7 @@ class Market:
     """
     This is the Carbon Allowance Market
     """
-    def __init__(self, allowallocation, percentreducallow, startprice):
+    def __init__(self, allowallocation, percentreducallow, startprice, n_households):
         self.allowallocation = allowallocation
         """
         percentreducallow is the percantage of how much the total amount of allowances is reduced per each year 
@@ -198,6 +203,28 @@ class Market:
         The default setting is 0.02 Euro
         """
         self.startprice = 0.02 
+        
+        """
+        Call the new method to create the households
+        """
+        self.households = self.setup_households(n_households)
+        
+    def setup_households(self, nb_of_hh):
+        """Creates the households
+
+        This function should be called via the `__init__` function
+        of the class `Market`. It creates the number of households.
+
+        Parameters
+        ----------
+        nb_of_hh : int
+            The number of households to be created
+        """
+        # TODO C: Hier musst du noch die Startwerte fur die Haushalte eintragen und damit die None Werte ersetzen. Diese sind ja v.a. Parameter, sollten also irgendwo am Anfang festgelegt werden
+        households = [Household(numpers=None, income=None, 
+                                socioecol=None, econ=None, 
+                                ipercent=None) for i in range(nb_of_hh)]
+        return households
  
 #Fehlt noch: Model mit n Haushalten bevölkern
 #Fehlt noch: Time ticks einbauen und Aktionen pro Phase machen 
