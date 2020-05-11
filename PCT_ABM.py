@@ -11,6 +11,7 @@ Make sure to adapt the model according to your prefrerences, this especially inc
     2) start price 
 # TODO der Rest der einstellbaren Variablen 
 """
+
 import random
 import math
 import statistics
@@ -19,27 +20,23 @@ class Household:
     """
     This is a class of Households.
     """
-    
-    def __init__(self, numpers, income, socioecol, econ, ipercent):
+    def __init__(self, numpers, income, socioecol, econ, actualdemand, demand, selling, income_spent, ipercent):
         """
         This is a method that ascribes *random* parameters to the households.
-        Those parameters are:
-        - Number of Persons living in the Household (Integer)
-        - Income (Integer)
-             incseq is a list of integers from which the monthly income is randomly drawn
-        - Socioecological Motiviation (Float)
-        - Economic Motivation (Float)
         """
         
         self.numpers = random.randrange(1, 4)
         """
+        The variable numpers is an integer that denotes how many persons are living in the household.
         The implicit assumption for Number of Persons per Household is a uniform distribution.
         Thus, household with 5 Members are as likely as households with 1, 2 or 3 Members, which most likely does not resemble the German population. 
         Further work on this code could include a left skewed distribution. 
         """
-        incseq = (500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000)
+        incseq = (500.0, 1000.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0, 5500.0, 6000.0)
         self.income = random.choice(incseq)
         """
+        The variable income is an float that denots how much income the household has in total.
+        incseq is a list of floats from which the monthly income is randomly drawn.
         The implicit assumption for income is a uniform distribution.
         Thus, household with 500 Euros income are as likely as households with 5000 or more Euros income, which most likely does not resemble the German income distribution.
         Further work on this code could include a left skewed distribution. 
@@ -47,184 +44,206 @@ class Household:
         self.socioecol = random.random()
         self.econ = random.random()
         """
-        socioecol and econ are variables that denote the socioecological and economical motivation of households in %.
+        socioecol and econ are float variables between 0 and 1 that denote the socioecological and economical motivation of households in %.
         """
-        
-        
+        self.actualdemand = actualdemand 
         """
-        The variables ipercent and demand are *not randomly* assigned.
+        The variable actualdemand is a float variable that denotes the carbon allowance demand per household.
         """
-        
-        self.ipercent = 0.1
+        self.demand = (1.1 - self.numpers * 0.05) * (math.log(math.log(self.income)) - 0.9) * 20278.0 * self.numpers * (0.8 + 0.4) * 0.527
         """
-        ipercent is a variable that denotes the income that can be spend on carbon reduction and/or allowances for each household 
-        it can arbitrarily be chosen by the modeler. 
-        The default setting is 1%
-        """
-#AB HIER WIRDS KRAUT UND RÜBEN!
-    def calcdemand(self, numpers, income, actualdemand):
-        """
-        demand is a variable that denotes the demand for 
+        The variable demand is a float that denotes how much carbon allowances one household demands in accordance to its number of persons and income.
         The function is retrieved from Seidl [2018]
         It is a rough estimate for the demand per household from Federal Environment Office (2016), page 65.
         Link:  https://www.umweltbundesamt.de/sites/default/files/medien/378/publikationen/texte_39_2016_repraesentative_erhebung_von_pro-kopf-verbraeuchen_natuerlicher_ressourcen.pdf
-        """    
-        self.demand  = (1.1 - numpers * 0.05) * (math.log(math.log(income)) - 0.9) * 20278.0 * numpers * (0.8 + 0.4) * 0.527
-        #hhier bekomme ich bis jetzt immer eine Fehlermeldung - print(Anna.calcdemand(2,6000))  gibt das Output None.        
+        """
+        self.selling = selling
+        """
+        The variable selling is a boolean variable that denotes whether the household sold allowances or bought allowances
+        """
+        self.income_spent = income_spent
+        """
+        The variable income_spent is a float variable that denotes how much income the household spends on carbon abatement technologies. 
+        """
+        self.ipercent = 0.1
+        """
+        The variable ipercent is *not randomly* assigned, but arbitraily chosen by the modeler.
+        ipercent is a float variable that denotes the income that can be spend on carbon reduction and/or allowances for each household 
+        The default setting is 1%
+        """
+        
+        
+    def calc_actualdemand(self, demand):    
         """
         actualdemand is a variable that denotes the initial demand for carbon allowances in the first time period.
         It will then updated in each time period. 
-        The actualdemand variable is calculated as the difference between the demand for allowances of the household (i) and the assigned allowances (ii).
-            (i) demand for allowances:
-                The function is retrieved from Seidl [2018]
-                It is a rough estimate for the demand per household from Federal Environment Office (2016), page 65.
-                Link:  https://www.umweltbundesamt.de/sites/default/files/medien/378/publikationen/texte_39_2016_repraesentative_erhebung_von_pro-kopf-verbraeuchen_natuerlicher_ressourcen.pdf
-            (ii) assigned allowances: 
-                The assumption here is that the initial allowance assignment equals the average allowance demand of all households. 
+        The actualdemand variable is calculated as the difference between the demand for allowances of the household (variable: demand) and the initially assigned allowances.
+        The assumption here is that the initial allowance assignment is the average allowance demand of all households. 
         """
-        #Ab hier wird  es etwas unübersichtlich - ich weiß nicht, ob die Idee, die ich hatte funktioniert.
-        list_numpers = [] #TODO wie kann ich hier eine Liste erstellen, bei der die Elemente die Personenanzahl jedes einzelnen Haushalts ist?  
-        NumPers = sum(list_numpers)
-                
-        list_demand = [] #TODO wie kann ich hier eine Liste erstellen, bei der die Elemente der errechnete Demand jedes einzelnen Haushalts ist?  
-        Demand = sum(list_demand)
-        BeginDemand = Demand / NumPers 
+        InitialAllowanceAssignment = sum_all_demand / sum_all_persons 
                                 
-        self.actualdemand = demand - BeginDemand
-        # TODO C: Hier wurde ohne Grund eingerueckt und damit ein Fehler verursacht; zudem muss print mit Klammern als Funktion verwendet werden (wir sind ja Python 3)
-        if actualdemand < 0:
-            print("I gotta work on my carbon footprint!")
-        elif actualdemand > 0:
-            print("I am already soooo ecofriendly!")
-        elif actualdemand == 0: # TODO C: Tests auf Gleichheit mit '==' nicht '='
-            print("Just about right!")
+        self.actualdemand = self.demand - InitialAllowanceAssignment
+        if self.actualdemand < 0:
+            print ("I gotta work on my carbon footprint!")
+        elif self.actualdemand > 0:
+            print ("I am already soooo ecofriendly!")
+        elif self.actualdemand == 0:
+            print ("Just about right!")
         else:
-            print("Something had gone wrong!")
-        #TODO overwrite demand von oben, damit der neue Demand eine eigenchaft  
-        
+            print ("Something had gone wrong!")
+    
         """
         Implicit assumption here: Households FIRST decide whether they sell or buy allowances and only then think about investement.
         This is important because the sell/buy decision has an impact on the investment decision. 
+        """        
+    def sell(self, actualdemand, income, selling):
         """
-        # TODO Bei den Funktion im Folgenden hast du bei der Definition immer 'self' als erstes Argument vergessen
-        def decide_sellbuy(self):
-            """
-            Households decide whether they sell or buy allowances.
-            Factors are: actualdemand, socioecol, econ
-            """
-            if actualdemand > 0: # TODO C Wenn hier das oben in Zeile 95 gemeinte actualdemand gemeint ist musst du schreiben: self.actualdemand
-                sell 
-            if actualdemand <0:
-                buy
-            else:
-                print("I did nothing")
-        # TODO C Bei den nächsten beiden Funktionen ist sold und bought nicht definiert
-        def sell(self):
-            """
-            This is a function that makes households sell all their affluent carbon allowances.
-            """
-            #TODO this will have to do with the market! 
-            #TODO der Haushalt muss sich das merken und dann eine Eigenschanft haben, der beschreibt dass diese Aktion gemacht wurde:
-            sold
-            
-        def buy(self):
-            """
-            This is a function that makes households buy exactly as many carbon allowances as they need to cover their demand.
-            """
-            # TODO this will have to do with the market! 
-            #TODO der Haushalt muss sich das merken und dann eine Eigenschanft haben, der beschreibt dass diese Aktion gemacht wurde: 
-            bought
-            
-            
+        This is a function that makes households sell all their affluent carbon allowances.
+        """
+        profit = self.actualdemand * m_startprice
+        m_allocation = m_allocation + self.actualdemand
+        self.income = self.income + profit
+        self.actualdemand = 0 
+        self.selling = True
+        #TODO funktioniert das so?! Besonders in Bezug auf den Markt?
+        #TODO denn: m_startprice und m_allocation sind Charakteristika der Klasse Markt
+    def buy(self, actualdemand, income, selling):
+        """
+        This is a function that makes households buy exactly as many carbon allowances as they need to cover their demand.
+        """
+        loss = self.actualdemand * m_startprice
+        m_allocation = m_allocation - self.actualdemand
+        self.income = self.income - loss
+        self.actualdemand = 0
+        self.selling = False
+        #TODO funktioniert das so?! Besonders in Bezug auf den Markt? Spiegelverkehrt zu Buy?!         
+    def decide_sellbuy(self, actualdemand, sell, buy):
+        """
+        Households decide whether they sell or buy allowances.
+        Factors are: actualdemand, socioecol, econ
+        """
+        if self.actualdemand > 0:
+            self.sell(self.actualdemand, self.sell, self.buy) 
+        if self.actualdemand < 0:
+            self.buy(self.actualdemand, self.sell, self.buy)
+        else:
+            print("I did nothing")
+   
+
         """
         Implicit assumption here: households can only change their demand through investments in carbon abatement technologies. 
         """
-        def decide_investsave():
-            """
-            Households decide whether they invest money in carbon abatement technologies or save money.
-            """
-            # TODO C: die Variablen sold and bought, econ und socioecol sind hier nicht definiert; wahrscheinlich willst du self.econ, self.socioecol etc. verwenden, weil es ja in init definiert Klassenattribute sind?
-            #TODO klären ob ich die econ und socioecol so in ein IfStatement packen kann
-            # TODO C: Es sollten ja "und" Tests sein, also ob econ > 0.6 UND socioecol >0.6 oder? Dann muss man das so machen:
-            if sold:
-                if (econ > 0.6) and (socioecol > 0.6):
-                    invest
-                elif (econ > 0.6) and (socioecol < 0.6):
-                    save
-                elif (econ < 0.6) and (socioecol > 0.6):
-                    invest
-                elif (econ < 0.6) and (socioecol < 0.6):
-                    save
-                else:
-                    print("Do you know what my motivation is?!")
-            # TODO C: Hier auch wie oben anpassen
-            if bought: 
-                if (econ > 0.6) and (socioecol > 0.6):
-                    invest
-                elif (econ > 0.6) and (socioecol < 0.6):
-                    invest
-                elif (econ < 0.6) and (socioecol > 0.6):
-                    invest
-                elif (econ < 0.6) and (socioecol < 0.6):
-                    save
-                else:
-                    print("Do you know what my motivation is?!")
+    def invest(self, income_spent, income, ipercent, actualdemand):
+        """
+        Households invest in carbon abatement technologies (more sufficient supplies or PV/Solar-Power, etc.).
+        Demand for carbon allowances will thus be lower in the next time step.
+        """
+        self.income_spent = self.income * ipercent 
+        self.income = self.income - self.income_spent 
+        self.actualdemand = self.actualdemand * 0.02
+        #TODO does this then this then refer here to the next time step?
+        """
+        The assumption here is that an investment of ipercent of the income will reduce the demand for carbon allowances by 2%, which is an arbirarily chosen number.
+        Further work on this code could include research-based evidence for this claim and change the arbirarily chosen 2% to a higher/lower number. 
+        """
+           
+    def save(self, income, actualdemand):
+        """
+        Households save their money and thus their demand does not change.
+        Only high income households can allow not to change their demand; low income households cannot make any debt and thus "die" 
+        """
+        self.income = self.income
+        self.actualdemand = self.actualdemand
+        #TODO was passiert: eigentlich ja nichts, denn das Einkommen steigt ja schon in der sell/buy function, Demand bleibt gleich im nächsten Monat.
+        #TODO macht die Funktion dann das was ich möchte? 
+        #TODO have a line of code that lets Households die  !!!      
+    
+    def decide_investsave(self, selling, socioecol, econ):
+        """
+        Households decide whether they invest money in carbon abatement technologies or save money.
+        """
+        if selling == True: 
+            if self.econ > 0.6 and self.socioecol > 0.6:
+                self.invest
+            elif self.econ > 0.6 and self.socioecol < 0.6:
+                self.save
+            elif self.econ < 0.6 and self.socioecol > 0.6:
+                self.invest
+            elif self.econ < 0.6 and self.socioecol < 0.6:
+                self.save
             else:
-                print("I dont know whether I sold or bought allowances")
-        
-        def invest():
-            """
-            Households invest in carbon abatement technologies (more sufficient supplies or PV/Solar-Power)
-            """
-            #TODO was passiert: die Haushalte haben weniger Einkommen, d.h. sie  geben all ihr verfügbares Einkommen aus (ipercent) und haben im nächsten Monat weniger Demand (Faktor ausdenken!)
-            
-        def save():
-            """
-            Households save their money and thus their demand does not change.
-            Only high income households can allow not to change their demand; low income households cannot make any debt and thus "die" 
-            """
-            #TODO was passiert: Einkommen steigt, Demand bleibt gleich im nächsten Monat.
+                print("Something went wrong!")
+        elif selling == False:
+            if self.econ > 0.6 and self.socioecol > 0.6:
+                self.invest
+            elif self.econ > 0.6 and self.socioecol < 0.6:
+                self.invest
+            elif self.econ < 0.6 and self.socioecol > 0.6:
+                self.invest
+            elif self.econ < 0.6 and self.socioecol < 0.6:
+                self.save
+        else:
+            print("I dont know whether I sold or bought allowances")
+       #TODO stimmt das so mit den if/elif/else statements?  
+     
 class Market: 
     """
     This is the Carbon Allowance Market
     """
-    def __init__(self, allowallocation, percentreducallow, startprice, n_households):
-        self.allowallocation = allowallocation
+    def __init__(self, m_allocation, percentreducallow, startprice, m_price):
+        self.m_allocation = m_allocation
+        """
+        m_allocation is a float variable that denots the total amount of available carbon allowances on the market.
+        It is especially used in the sell/buy function.
+        """
+        self.percentreducallow = 0.1
         """
         percentreducallow is the percantage of how much the total amount of allowances is reduced per each year 
         Reasonable values here are 0 up to 5%, depending on how much is being allowed at the beginning. 
         It can arbitrarily be chosen by the modeler. 
         The default setting is 1%
         """
-        self.percentreducallow = 0.1
+        self.startprice = 0.02 
         """
-        startprice is the initial price for one unit of carbon allowances.
+        startprice is a float variable that denotes the initial price for one unit of carbon allowances.
         it can arbitrarily be chosen by the modeler. 
         The default setting is 0.02 Euro
         """
-        self.startprice = 0.02 
-        
+        m_price = m_price
         """
-        Call the new method to create the households
+        m_price is a float variable that denots the market price for one unit of carbon allowances.
+        It is especially used in the sell/buy function.
         """
-        self.households = self.setup_households(n_households)
-        
-    def setup_households(self, nb_of_hh):
-        """Creates the households
+        #TODO wie wird der Marktpreis errechnet? 
 
-        This function should be called via the `__init__` function
-        of the class `Market`. It creates the number of households.
 
-        Parameters
-        ----------
-        nb_of_hh : int
-            The number of households to be created
-        """
-        # TODO C: Hier musst du noch die Startwerte fur die Haushalte eintragen und damit die None Werte ersetzen. Diese sind ja v.a. Parameter, sollten also irgendwo am Anfang festgelegt werden
-        households = [Household(numpers=None, income=None, 
-                                socioecol=None, econ=None, 
-                                ipercent=None) for i in range(nb_of_hh)]
-        return households
- 
-#Fehlt noch: Model mit n Haushalten bevölkern
-#Fehlt noch: Time ticks einbauen und Aktionen pro Phase machen 
+"""
+Das ist eine Lösung für die Bevölkerung des Models
+"""
+
+n = range(1, 101) # 100 Haushalte werden erzeugt
+
+all_households = [] # Leere Liste erzeugen, in welcher die einzelnen Haushalte gespeichert werden
+
+for i in n:
+    single_household = {} # Für jeden einzelnen Haushalt wird ein Dictionary erzeugt. Dadurch können wir dann über ihre Namen auf die einzelnen Werte zugreifen.
+    household = Household(0, 0, 0, 0, 0, 0, 0, 0, 0)
+    single_household["numpers"] = household.numpers
+    single_household["income"] = household.income
+    single_household["socioecol"] = household.socioecol
+    single_household["econ"] = household.econ
+    single_household["actualdemand"] = household.actualdemand
+    single_household["demand"] = household.demand
+    single_household["selling"] = household.selling
+    single_household["income_spent"] = household.income_spent
+    single_household["ipercent"] = household.ipercent
+    
+    all_households.append(single_household) # Die Werte für das eben erzeugte "Household"-Objekt werden der Liste hinzugefügt.
+    
+all_households
+
+sum_all_persons = sum(value["numpers"] for value in all_households) # Die Werte für "numpers" in allen Haushalten werden aufaddiert 
+sum_all_demand = sum(value["demand"] for value in all_households)
+
+
+#TODO Fehlt noch: Time ticks einbauen und Aktionen pro Phase machen 
