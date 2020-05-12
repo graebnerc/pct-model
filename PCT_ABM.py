@@ -49,6 +49,7 @@ class Household:
         self.actualdemand = actualdemand 
         """
         The variable actualdemand is a float variable that denotes the carbon allowance demand per household.
+        It is calcualted differently for the first time period in contrast to all other time periods.
         """
         self.demand = (1.1 - self.numpers * 0.05) * (math.log(math.log(self.income)) - 0.9) * 20278.0 * self.numpers * (0.8 + 0.4) * 0.527
         """
@@ -73,11 +74,9 @@ class Household:
         """
         
         
-    def calc_actualdemand(self, demand):    
+    def calc_actualdemand_t0(self, demand):    
         """
-        actualdemand is a variable that denotes the initial demand for carbon allowances in the first time period.
-        It will then updated in each time period. 
-        The actualdemand variable is calculated as the difference between the demand for allowances of the household (variable: demand) and the initially assigned allowances.
+        The actualdemand variable in the first time period is calculated as the difference between the demand for allowances of the household (variable: demand) and the initially assigned allowances.
         The assumption here is that the initial allowance assignment is the average allowance demand of all households. 
         """
         InitialAllowanceAssignment = sum_all_demand / sum_all_persons 
@@ -92,6 +91,24 @@ class Household:
         else:
             print ("Something had gone wrong!")
     
+    def calc_actualdemand_ti(self, demand, percentreducallow):
+        """
+        The actualdemand variable in all other time periods is calculated as the difference between the demand for allowances of the household (variable: demand) and the a percentage of the initially assigned allowances.
+        The percentage of the decrease of allocated allowances can be set by the modeler. 
+        """
+        AllowanceAssignment = InitialAllowanceAssignment - InitialAllowanceAssignment*percentreducallow
+        
+        self.actualdemand = self.demand - AllowanceAssignment
+        if self.actualdemand < 0:
+            print ("I gotta work on my carbon footprint!")
+        elif self.actualdemand > 0:
+            print ("I am already soooo ecofriendly!")
+        elif self.actualdemand == 0:
+            print ("Just about right!")
+        else:
+            print ("Something had gone wrong!")
+        
+        
         """
         Implicit assumption here: Households FIRST decide whether they sell or buy allowances and only then think about investement.
         This is important because the sell/buy decision has an impact on the investment decision. 
@@ -141,7 +158,6 @@ class Household:
         self.income_spent = self.income * ipercent 
         self.income = self.income - self.income_spent 
         self.actualdemand = self.actualdemand * 0.02
-        #TODO does this then this then refer here to the next time step?
         """
         The assumption here is that an investment of ipercent of the income will reduce the demand for carbon allowances by 2%, which is an arbirarily chosen number.
         Further work on this code could include research-based evidence for this claim and change the arbirarily chosen 2% to a higher/lower number. 
@@ -154,8 +170,6 @@ class Household:
         """
         self.income = self.income
         self.actualdemand = self.actualdemand
-        #TODO was passiert: eigentlich ja nichts, denn das Einkommen steigt ja schon in der sell/buy function, Demand bleibt gleich im nächsten Monat.
-        #TODO macht die Funktion dann das was ich möchte? 
         #TODO have a line of code that lets Households die  !!!      
     
     def decide_investsave(self, selling, socioecol, econ):
@@ -164,44 +178,48 @@ class Household:
         """
         if selling == True: 
             if self.econ > 0.6 and self.socioecol > 0.6:
-                self.invest
+                self.invest(self.income_spent, self.income, self.ipercent, self.actualdemand)
             elif self.econ > 0.6 and self.socioecol < 0.6:
-                self.save
+                self.save(self.income, self.actualdemand)
             elif self.econ < 0.6 and self.socioecol > 0.6:
-                self.invest
+                self.invest(self.income_spent, self.income, self.ipercent, self.actualdemand)
             elif self.econ < 0.6 and self.socioecol < 0.6:
-                self.save
+                self.save(self.income, self.actualdemand)
             else:
                 print("Something went wrong!")
         elif selling == False:
             if self.econ > 0.6 and self.socioecol > 0.6:
-                self.invest
+                self.invest(self.income_spent, self.income, self.ipercent, self.actualdemand)
             elif self.econ > 0.6 and self.socioecol < 0.6:
-                self.invest
+                self.invest(self.income_spent, self.income, self.ipercent, self.actualdemand)
             elif self.econ < 0.6 and self.socioecol > 0.6:
-                self.invest
+                self.invest(self.income_spent, self.income, self.ipercent, self.actualdemand)
             elif self.econ < 0.6 and self.socioecol < 0.6:
-                self.save
+                self.save(self.income, self.actualdemand)
         else:
             print("I dont know whether I sold or bought allowances")
-       #TODO stimmt das so mit den if/elif/else statements?  
      
 class Market: 
     """
     This is the Carbon Allowance Market
     """
-    def __init__(self, m_allocation, percentreducallow, startprice, m_price):
+    def __init__(self, m_allocation, m_price, percentreducallow, startprice):
         self.m_allocation = m_allocation
         """
         m_allocation is a float variable that denots the total amount of available carbon allowances on the market.
         It is especially used in the sell/buy function.
         """
-        self.percentreducallow = 0.1
+        m_price = m_price
+        """
+        m_price is a float variable that denots the market price for one unit of carbon allowances.
+        It is especially used in the sell/buy function.
+        """
+        self.percentreducallow = 0.01
         """
         percentreducallow is the percantage of how much the total amount of allowances is reduced per each year 
         Reasonable values here are 0 up to 5%, depending on how much is being allowed at the beginning. 
         It can arbitrarily be chosen by the modeler. 
-        The default setting is 1%
+        The default setting is 1%.
         """
         self.startprice = 0.02 
         """
@@ -209,14 +227,23 @@ class Market:
         it can arbitrarily be chosen by the modeler. 
         The default setting is 0.02 Euro
         """
-        m_price = m_price
-        """
-        m_price is a float variable that denots the market price for one unit of carbon allowances.
-        It is especially used in the sell/buy function.
-        """
         #TODO wie wird der Marktpreis errechnet? 
-
-
+    
+    def calc_allocation(self, m_allocation):
+        """
+        This is a function that sums up all the allowances that are took to or from the market aka sold or bought at the market.
+        """
+        #m_allocation = m_allocation
+        
+        #m_allocation = sum(value["actualdemand"] for value in all_households)
+        
+    def calc_price(self, m_price):
+        """
+        This is a function that calculates the market price for allowances for the next time step. 
+        """
+        
+        
+        
 """
 Das ist eine Lösung für die Bevölkerung des Models
 """
@@ -244,6 +271,13 @@ all_households
 
 sum_all_persons = sum(value["numpers"] for value in all_households) # Die Werte für "numpers" in allen Haushalten werden aufaddiert 
 sum_all_demand = sum(value["demand"] for value in all_households)
+
+class Model:
+    """
+    This is a class i the instance of a single model as described in the paper.
+    """
+    def run():
+        
 
 
 #TODO Fehlt noch: Time ticks einbauen und Aktionen pro Phase machen 
