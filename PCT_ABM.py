@@ -15,16 +15,17 @@ Make sure to adapt the model according to your prefrerences, this especially inc
 import random
 import math
 import statistics
+import numpy as np
 
 class Household:
     """
     This is a class of Households.
     """
-    def __init__(self, numpers, income, socioecol, econ, actualdemand, demand, selling, income_spent, ipercent):
+    def __init__(self, id):
         """
         This is a method that ascribes *random* parameters to the households.
         """
-        
+        self.id = id
         self.numpers = random.randrange(1, 4)
         """
         The variable numpers is an integer that denotes how many persons are living in the household.
@@ -46,11 +47,7 @@ class Household:
         """
         socioecol and econ are float variables between 0 and 1 that denote the socioecological and economical motivation of households in %.
         """
-        self.actualdemand = actualdemand 
-        """
-        The variable actualdemand is a float variable that denotes the carbon allowance demand per household.
-        It is calcualted differently for the first time period in contrast to all other time periods.
-        """
+
         self.demand = (1.1 - self.numpers * 0.05) * (math.log(math.log(self.income)) - 0.9) * 20278.0 * self.numpers * (0.8 + 0.4) * 0.527
         """
         The variable demand is a float that denotes how much carbon allowances one household demands in accordance to its number of persons and income.
@@ -58,11 +55,16 @@ class Household:
         It is a rough estimate for the demand per household from Federal Environment Office (2016), page 65.
         Link:  https://www.umweltbundesamt.de/sites/default/files/medien/378/publikationen/texte_39_2016_repraesentative_erhebung_von_pro-kopf-verbraeuchen_natuerlicher_ressourcen.pdf
         """
-        self.selling = selling
+        # self.actualdemand = self.calc_actualdemand_t0() # TODO Das sollte nicht in der init Funktion stehen (siehe Ergänzung in Modell Klasse)
+        """
+        The variable actualdemand is a float variable that denotes the carbon allowance demand per household.
+        It is calcualted differently for the first time period in contrast to all other time periods.
+        """
+        self.selling = selling # TODO Diese Variable ist noch nicht definiert worden
         """
         The variable selling is a boolean variable that denotes whether the household sold allowances or bought allowances
         """
-        self.income_spent = income_spent
+        self.income_spent = income_spent # TODO Diese Variable ist noch nicht definiert worden
         """
         The variable income_spent is a float variable that denotes how much income the household spends on carbon abatement technologies. 
         """
@@ -74,12 +76,18 @@ class Household:
         """
         
         
-    def calc_actualdemand_t0(self, demand):    
-        """
+    def calc_actualdemand_t0(self, avg_demand):
+        """Compute demand in first time step
+
         The actualdemand variable in the first time period is calculated as the difference between the demand for allowances of the household (variable: demand) and the initially assigned allowances.
         The assumption here is that the initial allowance assignment is the average allowance demand of all households. 
+
+        Parameters
+        ----------
+        avg_demand : float
+            Average demand of all households
         """
-        InitialAllowanceAssignment = sum_all_demand / sum_all_persons 
+        InitialAllowanceAssignment = avg_demand
                                 
         self.actualdemand = self.demand - InitialAllowanceAssignment
         if self.actualdemand < 0:
@@ -247,7 +255,7 @@ class Market:
 """
 Das ist eine Lösung für die Bevölkerung des Models
 """
-
+"""
 n = range(1, 101) # 100 Haushalte werden erzeugt
 
 all_households = [] # Leere Liste erzeugen, in welcher die einzelnen Haushalte gespeichert werden
@@ -271,13 +279,52 @@ all_households
 
 sum_all_persons = sum(value["numpers"] for value in all_households) # Die Werte für "numpers" in allen Haushalten werden aufaddiert 
 sum_all_demand = sum(value["demand"] for value in all_households)
+"""
 
 class Model:
     """
     This is a class i the instance of a single model as described in the paper.
+    
+    1. Create Households
+    2. Create Market
+    3. Run model for x time steps
+        3.0. Compute nb of allowances for this time step # TODO check sequence
+        3.1. Compute demand for each household
+        3.2. HH decide whether they buy
+        3.3. HH decide why save or invest
+        3.4. Compute price for allowances in the next period # TODO check in netlogo mode
+    3.5. Save state variables
+    4. Save results
     """
-    def run():
+    def __init__(self, nb_hh, t_steps):
+        self.t_steps = t_steps
+        self.list_of_households = self.create_households(nb_hh=nb_hh)
+        avg_demand = np.mean([h.demand for h in self.list_of_households])
+        for h in self.list_of_households:
+            h.calc_actual_demand_t0(avg_demand)
+        
+    def run(self):
+        for i in range(self.t_steps):
+            print("Time step: {}".format(i))
+            # compute allowences
+            #for j in self.list_of_households:
+            #    j.calc_actualdemand_ti()
+    
+    def create_households(self, nb_hh):
+        """Create the households
+
+        Just creates a list of households.
+        
+        Parameters
+        ----------
+        nb_hh: int
+            Nb of households in the mode
+        """
+        list_of_hh = [Household(id=i) for i in range(nb_hh)]
+        return list_of_hh
         
 
+        
+# example_model = Model(nb_h=100)
 
 #TODO Fehlt noch: Time ticks einbauen und Aktionen pro Phase machen 
