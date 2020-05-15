@@ -27,6 +27,7 @@ class Model:
     def __init__(self, nb_hh, t_steps):
         self.t_steps = t_steps
         self.list_of_households = self.create_households(nb_hh=nb_hh)
+        self.list_of_dead_households = []
         print("THESE ARE ALL YOUR HOUSEHOLDS:")
         for h in self.list_of_households:
             print(h.id)
@@ -54,9 +55,12 @@ class Model:
             print(h.demand)
             if h.income < 0:
                 print(">>>>>I am dead because I cannot make debt")
+                h.dead = 1
+                self.list_of_dead_households.append(h)
             else:
-                {}
+                {} # TODO C Was wolltest du hiermit machen?
             print("---")
+        self.list_of_households = [] # TODO C Hier eine List comprehension, die die Liste der Haushalte updated und alle gestorbenen Haushalte eliminiert / nicht berücksichtigt
             
  #TODO delet dead household from list   
     
@@ -87,9 +91,12 @@ class Model:
                 print(h.demand)
                 if h.income < 0:
                     print(">>>>>I am dead because I cannot make debt")
+                    h.dead = i
+                    self.list_of_dead_households.append(h)
                 else:
-                    {}
+                    {} # TODO C Was wolltest du hiermit machen?
                 print("--- ")
+            self.list_of_households = [] # TODO C Hier eine List comprehension, die die Liste der Haushalte updated und alle gestorbenen Haushalte eliminiert / nicht berücksichtigt
     
     def create_households(self, nb_hh):
         """Create the households

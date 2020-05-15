@@ -61,6 +61,7 @@ class Household:
         """
         The variable income_spent is a float variable that denotes how much income the household spends on carbon abatement technologies. 
         """
+        self.dead = None # The household is not dead yet; here you can save the time step of its death
         
         
         
